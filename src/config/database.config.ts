@@ -14,7 +14,8 @@ export const getDataBaseConfig = (
   username: configService.get('DB_USERNAME'), // 用户名
   password: configService.get('DB_PASSWORD'), // 密码
   database: configService.get('DB_DATABASE'), // 数据库名
-  entities: [__dirname + '/**/*.entity{.ts,.js}'], // 实体类列表
+  //  如果entities写在跟模块里，这样写[__dirname + '/**/*.entity{.ts,.js}']
+  entities: [__dirname + '/../**/*.entity{.ts,.js}'], // 实体类列表
   synchronize: configService.get('NODE_ENV') === 'development', // 自动同步表结构（仅开发环境）
   logging: configService.get('NODE_ENV') === 'development', // 打印SQL日志
   timezone: '+08:00', // 时区设置
