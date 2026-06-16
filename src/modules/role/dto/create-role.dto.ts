@@ -24,4 +24,8 @@ export class CreateRoleDto {
   @IsOptional()
   @IsInt()
   sortOrder?: number;
+
+  @IsOptional()
+  @IsInt()
+  roleLevel?: number;
 }

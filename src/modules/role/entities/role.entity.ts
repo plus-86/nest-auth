@@ -38,6 +38,9 @@ export class Role {
   })
   isSystem: number;
 
+  @Column({ name: 'role_level', type: 'int', default: 10 })
+  roleLevel: number;
+
   @Column({ name: 'sort_order', type: 'int', default: 0, comment: '排序' })
   sortOrder: number;
 

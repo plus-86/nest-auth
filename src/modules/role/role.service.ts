@@ -28,8 +28,14 @@ export class RoleService {
     return `This action returns a #${id} role`;
   }
 
-  update(id: number, updateRoleDto: UpdateRoleDto) {
-    return `This action updates a #${id} role`;
+  async update(updateRoleDto: UpdateRoleDto) {
+    const { code } = updateRoleDto;
+
+    const role = await this.roleRepository.findOneBy({ code });
+
+    Object.assign(role, updateRoleDto);
+
+    return this.roleRepository.save(role);
   }
 
   remove(id: number) {
