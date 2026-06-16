@@ -5,11 +5,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { loginDto } from './dto/login.dto';
+import { Role } from '../role/entities/role.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(Role) private roleRepository: Repository<Role>,
   ) {}
   async create(createUserDto: CreateUserDto) {
     const { username, password } = createUserDto;
@@ -21,6 +23,10 @@ export class UserService {
     if (existingUser) throw new ConflictException('该用户名已存在');
 
     const user = this.userRepository.create(createUserDto);
+
+    const roloUser = await this.roleRepository.findOneBy({ code: 'ROLE_USER' });
+
+    user.roles = [roloUser];
 
     await user.setPassword(password);
 
