@@ -4,6 +4,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { loginDto } from './dto/login.dto';
 
 @Injectable()
 export class UserService {
@@ -24,6 +25,23 @@ export class UserService {
     await user.setPassword(password);
 
     return this.userRepository.save(user);
+  }
+
+  async login(loginDto: loginDto) {
+    const { username, password } = loginDto;
+
+    const user = await this.userRepository.findOneBy({ username });
+
+    if (!user) throw new ConflictException(`该用户不存在`);
+
+    const isPasswordValid = await user.validatePassword(password);
+
+    if (!isPasswordValid) throw new ConflictException(`密码错误`);
+
+    return {
+      code: 200,
+      message: `登录成功`,
+    };
   }
 
   findAll() {
