@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './modules/user/user.module';
 import { RoleModule } from './modules/role/role.module';
 import { PermissionModule } from './modules/permission/permission.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PermissionModule } from './modules/permission/permission.module';
     UserModule,
     RoleModule,
     PermissionModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [AppService],

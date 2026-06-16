@@ -1,10 +1,13 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { loginDto } from './dto/login.dto';
 import { Role } from '../role/entities/role.entity';
 
 @Injectable()
@@ -13,6 +16,30 @@ export class UserService {
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Role) private roleRepository: Repository<Role>,
   ) {}
+  async findByUsername(username: string) {
+    const user = await this.userRepository.findOne({
+      where: { username },
+      relations: {
+        roles: true,
+      },
+      select: {
+        roles: {
+          code: true,
+          roleLevel: true,
+        },
+      },
+    });
+    return user;
+  }
+
+  async findById(id: number) {
+    const user = await this.userRepository.findOneBy({ id });
+
+    if (!user) throw new UnauthorizedException('用户不存在');
+
+    return user;
+  }
+
   async create(createUserDto: CreateUserDto) {
     const { username, password } = createUserDto;
 
@@ -33,22 +60,22 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async login(loginDto: loginDto) {
-    const { username, password } = loginDto;
+  // async login(loginDto: loginDto) {
+  //   const { username, password } = loginDto;
 
-    const user = await this.userRepository.findOneBy({ username });
+  //   const user = await this.userRepository.findOneBy({ username });
 
-    if (!user) throw new ConflictException(`该用户不存在`);
+  //   if (!user) throw new ConflictException(`该用户不存在`);
 
-    const isPasswordValid = await user.validatePassword(password);
+  //   const isPasswordValid = await user.validatePassword(password);
 
-    if (!isPasswordValid) throw new ConflictException(`密码错误`);
+  //   if (!isPasswordValid) throw new ConflictException(`密码错误`);
 
-    return {
-      code: 200,
-      message: `登录成功`,
-    };
-  }
+  //   return {
+  //     code: 200,
+  //     message: `登录成功`,
+  //   };
+  // }
 
   async findAll() {
     return await this.userRepository.find({ relations: { roles: true } });
