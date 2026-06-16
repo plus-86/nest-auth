@@ -1,11 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Role } from './entities/role.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class RoleService {
-  create(createRoleDto: CreateRoleDto) {
-    return 'This action adds a new role';
+  constructor(
+    @InjectRepository(Role) private roleRepository: Repository<Role>,
+  ) {}
+  async create(createRoleDto: CreateRoleDto) {
+    const { code } = createRoleDto;
+
+    const role = await this.roleRepository.findOneBy({ code });
+
+    if (role) throw new ConflictException(`该角色已存在`);
+
+    return this.roleRepository.save(createRoleDto);
   }
 
   findAll() {
