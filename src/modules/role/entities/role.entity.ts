@@ -1,4 +1,5 @@
 import { Permission } from 'src/modules/permission/entities/permission.entity';
+import { User } from 'src/modules/user/entities/user.entity';
 import {
   Entity,
   Column,
@@ -7,6 +8,7 @@ import {
   UpdateDateColumn,
   ManyToMany,
   JoinTable,
+  OneToMany,
 } from 'typeorm';
 
 /**
@@ -49,6 +51,9 @@ export class Role {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @OneToMany(() => User, (user) => user.role)
+  users: User[];
 
   /**
    * 多对多关联权限

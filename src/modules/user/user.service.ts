@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -20,10 +21,10 @@ export class UserService {
     const user = await this.userRepository.findOne({
       where: { username },
       relations: {
-        roles: true,
+        role: true,
       },
       select: {
-        roles: {
+        role: {
           code: true,
           roleLevel: true,
         },
@@ -41,19 +42,22 @@ export class UserService {
   }
 
   async create(createUserDto: CreateUserDto) {
-    const { username, password } = createUserDto;
+    const { username, password, roleId } = createUserDto;
 
-    const existingUser = await this.userRepository.findOneBy({
-      username,
-    });
+    // ✅ 并行查询，提升性能
+    const [existingUser, role] = await Promise.all([
+      this.userRepository.findOneBy({ username }),
+      this.roleRepository.findOneBy({ id: roleId }),
+    ]);
 
     if (existingUser) throw new ConflictException('该用户名已存在');
 
-    const user = this.userRepository.create(createUserDto);
+    if (!role) throw new BadRequestException('角色不存在');
 
-    const roloUser = await this.roleRepository.findOneBy({ code: 'ROLE_USER' });
-
-    user.roles = [roloUser];
+    const user = this.userRepository.create({
+      username,
+      role,
+    });
 
     await user.setPassword(password);
 
@@ -78,7 +82,7 @@ export class UserService {
   // }
 
   async findAll() {
-    return await this.userRepository.find({ relations: { roles: true } });
+    return await this.userRepository.find({ relations: { role: true } });
   }
 
   findOne(id: number) {
