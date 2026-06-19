@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -23,25 +24,25 @@ export class UserService {
       relations: {
         role: true,
       },
-      select: {
-        role: {
-          code: true,
-          roleLevel: true,
-        },
-      },
     });
     return user;
   }
 
   async findById(id: number) {
-    const user = await this.userRepository.findOneBy({ id });
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: { role: true },
+    });
 
     if (!user) throw new UnauthorizedException('用户不存在');
 
     return user;
   }
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto, currentUser: User) {
+    if (currentUser.role.code !== 'ROLE_ADMIN')
+      throw new ForbiddenException('仅超级管理员可创建用户');
+
     const { username, password, roleId } = createUserDto;
 
     // ✅ 并行查询，提升性能

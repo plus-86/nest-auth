@@ -27,6 +27,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.userService.findById(payload.userId);
 
     // 返回的用户信息会挂到 req.user 上
-    return { userId: user.id, username: user.username };
+    return user;
   }
 }
