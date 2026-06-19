@@ -26,24 +26,21 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  @Get('/list')
   @UseGuards(AuthGuard('jwt'))
+  @Get('/list')
   findAll() {
     return this.userService.findAll();
   }
 
-  // @Post('/login')
-  // login(@Body() loginDto:loginDto){
-  //   return this.userService.login(loginDto)
-  // }
-
+  @UseGuards(AuthGuard('jwt'))
   @Post('/update')
   update(@Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(updateUserDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
+  @Post('/delete')
+  @UseGuards(AuthGuard('jwt'), RoleGuard)
+  remove(@Body('id') id: number) {
+    return this.userService.delete(id);
   }
 }

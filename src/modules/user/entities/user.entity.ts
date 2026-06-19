@@ -3,6 +3,7 @@ import {
   BeforeUpdate,
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   JoinTable,
@@ -13,6 +14,7 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt'; // 导入bcrypt库的所有功能，并将其赋值给名为bcrypt的变量
 import { Role } from 'src/modules/role/entities/role.entity';
+import { Exclude } from 'class-transformer';
 @Entity('user')
 export class User {
   @PrimaryGeneratedColumn({ type: 'int', unsigned: true, comment: '用户ID' }) // unsigned 是 MySQL/数据库中的**无符号整数**概念，意思是只能存储非负数（0 和正整数）。
@@ -22,6 +24,7 @@ export class User {
   username: string;
 
   @Column({ name: 'password_hash', length: 255, comment: '密码哈希值' })
+  @Exclude()
   passwordHash: string;
 
   @Column({ length: 100, nullable: true, unique: true, comment: '邮箱' })
@@ -61,6 +64,8 @@ export class User {
   @UpdateDateColumn({ name: 'updated_at', comment: '更新时间' })
   updatedAt: Date;
 
+  @DeleteDateColumn({ name: 'delete_at', comment: '删除时间' })
+  deleteAt: Date;
   /**
    * 多对多关联角色
    * 通过中间表 user_role 关联

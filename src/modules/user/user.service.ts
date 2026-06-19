@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -115,7 +116,10 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async delete(id: number) {
+    const result = await this.userRepository.softDelete({ id });
+    if (result.affected === 0)
+      throw new NotFoundException(`用户 ID ${id} 不存在`);
+    return { code: 200, message: '操作成功' };
   }
 }

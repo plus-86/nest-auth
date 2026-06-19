@@ -14,7 +14,7 @@ export class RoleGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    const isAdmin = user.role.code === 'ROLE_ADMIN';
+    const isAdmin = user.role.code === 'ROLE_SUPER_ADMIN';
     if (!isAdmin) throw new ForbiddenException('权限不足');
     return isAdmin;
   }
