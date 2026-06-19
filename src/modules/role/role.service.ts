@@ -24,8 +24,8 @@ export class RoleService {
     return `This action returns all role`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} role`;
+  async findOne(id: number) {
+    return await this.roleRepository.findOneBy({ id });
   }
 
   async update(updateRoleDto: UpdateRoleDto) {

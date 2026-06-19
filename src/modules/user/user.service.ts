@@ -11,13 +11,13 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { Role } from '../role/entities/role.entity';
+import { RoleService } from '../role/role.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
-    @InjectRepository(Role) private roleRepository: Repository<Role>,
+    private roleService: RoleService,
   ) {}
   async findByUsername(username: string) {
     const user = await this.userRepository.findOne({
@@ -49,7 +49,7 @@ export class UserService {
     // ✅ 并行查询，提升性能
     const [existingUser, role] = await Promise.all([
       this.userRepository.findOneBy({ username }),
-      this.roleRepository.findOneBy({ id: roleId }),
+      this.roleService.findOne(roleId),
     ]);
 
     if (existingUser) throw new ConflictException('该用户名已存在');
