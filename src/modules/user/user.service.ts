@@ -39,9 +39,9 @@ export class UserService {
     return user;
   }
 
-  async create(createUserDto: CreateUserDto, currentUser: User) {
-    if (currentUser.role.code !== 'ROLE_ADMIN')
-      throw new ForbiddenException('仅超级管理员可创建用户');
+  async create(createUserDto: CreateUserDto) {
+    // if (currentUser.role.code !== 'ROLE_ADMIN')
+    //   throw new ForbiddenException('仅超级管理员可创建用户');
 
     const { username, password, roleId } = createUserDto;
 

@@ -14,18 +14,16 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { User } from './entities/user.entity';
+import { RoleGuard } from 'src/common/guards/role.guard';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('/create')
-  @UseGuards(AuthGuard('jwt'))
-  create(
-    @Body() createUserDto: CreateUserDto,
-    @CurrentUser() currentUser: User,
-  ) {
-    return this.userService.create(createUserDto, currentUser);
+  @UseGuards(AuthGuard('jwt'), RoleGuard)
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.userService.create(createUserDto);
   }
 
   @Get('/list')
