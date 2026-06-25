@@ -7,6 +7,7 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from '../user/user.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { PermissionModule } from '../permission/permission.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       inject: [ConfigService], // 把 ConfigService 注入到工厂函数里，这样才能用 configService.get() 读取 .env
     }),
     UserModule,
+    PermissionModule
   ],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy],

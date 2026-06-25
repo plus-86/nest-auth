@@ -2,12 +2,14 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
+import { PermissionService } from '../permission/permission.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
     private userService: UserService,
+    private permissionService: PermissionService,
   ) {}
 
   async validateUser(username: string, password: string) {
@@ -29,5 +31,9 @@ export class AuthService {
     return {
       access_token: await this.jwtService.signAsync(payload), // 生成 Token
     };
+  }
+
+  async getMenus(permissionCodes) {
+    return this.permissionService.getMenuByPermCodes(permissionCodes);
   }
 }

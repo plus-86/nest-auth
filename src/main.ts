@@ -11,6 +11,10 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
+
+  const express = app.getHttpAdapter().getInstance();
+  express.disable('x-powered-by');
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

@@ -1,4 +1,4 @@
-import { Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport'; // NestJS 的守卫（Guard），用于在路由处理前执行认证逻辑。
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -18,5 +18,11 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   async login(@CurrentUser() user: User) {
     return this.authService.login(user); // 生成并返回 Token
+  }
+
+  @Get('menus')
+  @UseGuards(AuthGuard('jwt'))
+  async getMenus(@CurrentUser() user) {
+    return this.authService.getMenus(user.permissionCodes);
   }
 }
