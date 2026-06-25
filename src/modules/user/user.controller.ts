@@ -15,31 +15,34 @@ import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { User } from './entities/user.entity';
 import { RoleGuard } from 'src/common/guards/role.guard';
+import { PermissionsGuard } from 'src/common/guards/permission.guard';
+import { RequirePermissions } from 'src/common/decorators/permission.decorator';
 
 @Controller('user')
+@UseGuards(AuthGuard('jwt'), PermissionsGuard)
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @Post('/create')
-  @UseGuards(AuthGuard('jwt'), RoleGuard)
+  @RequirePermissions('user:create')
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('/list')
+  @RequirePermissions('user:read')
   findAll() {
     return this.userService.findAll();
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Post('/update')
+  @RequirePermissions('user:update')
   update(@Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(updateUserDto);
   }
 
   @Post('/delete')
-  @UseGuards(AuthGuard('jwt'), RoleGuard)
+  @RequirePermissions('user:delete')
   remove(@Body('id') id: number) {
     return this.userService.delete(id);
   }

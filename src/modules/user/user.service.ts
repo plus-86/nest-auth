@@ -18,7 +18,7 @@ export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     private roleService: RoleService,
-  ) {}
+  ) { }
   async findByUsername(username: string) {
     const user = await this.userRepository.findOne({
       where: { username },
@@ -32,7 +32,11 @@ export class UserService {
   async findById(id: number) {
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: { role: true },
+      relations: {
+        role: {
+          permissions: true
+        }
+      }
     });
 
     if (!user) throw new UnauthorizedException('用户不存在');
@@ -84,7 +88,7 @@ export class UserService {
   // }
 
   async findAll() {
-    return await this.userRepository.find({ relations: { role: true } });
+    return await this.userRepository.find({ relations: { role: { permissions: true } } });
   }
 
   findOne(id: number) {

@@ -28,4 +28,7 @@ export class CreateRoleDto {
   @IsOptional()
   @IsInt()
   roleLevel?: number;
+
+  @IsNotEmpty()
+  permissionCodes: string[]
 }

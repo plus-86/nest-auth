@@ -4,12 +4,14 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from './entities/role.entity';
 import { Repository } from 'typeorm';
+import { PermissionService } from '../permission/permission.service';
 
 @Injectable()
 export class RoleService {
   constructor(
+    private permissionService: PermissionService,
     @InjectRepository(Role) private roleRepository: Repository<Role>,
-  ) {}
+  ) { }
   async create(createRoleDto: CreateRoleDto) {
     const { code } = createRoleDto;
 
@@ -29,9 +31,13 @@ export class RoleService {
   }
 
   async update(updateRoleDto: UpdateRoleDto) {
-    const { code } = updateRoleDto;
-
+    const { code, permissionCodes } = updateRoleDto;
+    
     const role = await this.roleRepository.findOneBy({ code });
+
+    const perms = await this.permissionService.findByCodes(permissionCodes)
+   
+    role.permissions = perms
 
     Object.assign(role, updateRoleDto);
 
