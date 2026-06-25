@@ -1,27 +1,33 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-    constructor(private reflector: Reflector) { }
-    canActivate(context: ExecutionContext): boolean {
-        // 1. 从接口上的装饰器取到需要的权限码
-        const requiredCodes = this.reflector.get<string[]>('permissions', context.getHandler());
-        if (!requiredCodes) return true; // 没加装饰器则直接放行
+  constructor(private reflector: Reflector) {}
+  canActivate(context: ExecutionContext): boolean {
+    // 1. 从接口上的装饰器取到需要的权限码
+    const requiredCodes = this.reflector.get<string[]>(
+      'permissions',
+      context.getHandler(),
+    );
+    if (!requiredCodes) return true; // 没加装饰器则直接放行
 
-        // 2. 从请求里拿到当前登录用户（假设前面有 JWT 守卫已经挂载了 user）
-        const { user } = context.switchToHttp().getRequest();
+    // 2. 从请求里拿到当前登录用户（假设前面有 JWT 守卫已经挂载了 user）
+    const { user } = context.switchToHttp().getRequest();
+    // 3. 取用户的所有权限码（需要在JWT策略里提前查好放到 user.permissions 里）
+    const userPermissions = user.permissionCodes ?? [];
 
-        // 3. 取用户的所有权限码（需要在JWT策略里提前查好放到 user.permissions 里）
-        const userPermissions = user.permissions ?? [];
+    // 4. 检查用户是否拥有任意一个所需权限
+    const hasPermission = requiredCodes.some((code) =>
+      userPermissions.includes(code),
+    );
 
-        const perms = userPermissions.map(p => p.code)
-
-        // 4. 检查用户是否拥有任意一个所需权限
-        const hasPermission = requiredCodes.some(code => perms.includes(code));
-
-        if (!hasPermission) throw new ForbiddenException('权限不足perm');
-        return true;
-    }
+    if (!hasPermission) throw new ForbiddenException('权限不足perm');
+    return true;
+  }
 }

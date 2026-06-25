@@ -24,9 +24,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   // Token 验证通过后，自动调用这个方法
   async validate(payload: any) {
     // payload 就是 Token 里存的数据 { userId, username }
-    const user = await this.userService.findById(payload.userId);
+    const { passwordHash, ...user } = await this.userService.findById(
+      payload.userId,
+    );
 
     // 返回的用户信息会挂到 req.user 上
-    return user;
+    return {
+      ...user,
+      permissionCodes: user.role?.permissions?.map((p) => p.code) ?? [],
+    };
   }
 }
