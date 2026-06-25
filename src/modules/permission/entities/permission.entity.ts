@@ -1,5 +1,12 @@
 import { Role } from 'src/modules/role/entities/role.entity';
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToMany,
+} from 'typeorm';
 
 /**
  * 权限实体类
@@ -17,7 +24,7 @@ export class Permission {
   name: string;
 
   @ManyToMany(() => Role, (role) => role.permissions)
-  roles: Role[]
+  roles: Role[];
 
   // @Column({ length: 50, comment: '资源（如 user）' })
   // resource: string;
@@ -25,20 +32,24 @@ export class Permission {
   // @Column({ length: 20, comment: '操作（如 create）' })
   // action: string;
 
-  // @Column({ name: 'parent_id', type: 'int', default: 0, comment: '父级ID' })
-  // parentId: number;
+  @Column({ name: 'parent_id', type: 'int', default: 0, comment: '父级ID' })
+  parentId: number;
 
-  // @Column({ length: 200, nullable: true, comment: '前端路由' })
-  // path: string;
+  @Column({ length: 200, nullable: true, comment: '前端路由' })
+  path: string;
 
-  // @Column({ length: 50, nullable: true, comment: '菜单图标' })
-  // icon: string;
+  @Column({ length: 50, nullable: true, comment: '菜单图标' })
+  icon: string;
 
-  // @Column({ type: 'tinyint', default: 1, comment: '类型：1-菜单，2-按钮' })
-  // type: number;
+  @Column({
+    type: 'tinyint',
+    default: 3,
+    comment: '类型：1-目录，2-菜单，3-接口',
+  })
+  type: number;
 
-  // @Column({ name: 'sort_order', type: 'int', default: 0, comment: '排序' })
-  // sortOrder: number;
+  @Column({ name: 'sort_order', type: 'int', default: 0, comment: '排序' })
+  sortOrder: number;
 
   // @Column({ type: 'tinyint', default: 1, comment: '状态：1-启用，2-禁用' })
   // status: number;
