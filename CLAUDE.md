@@ -35,85 +35,84 @@ npm run test:e2e
 
 # 运行单个测试文件
 npx jest -- src/modules/user/user.service.spec.ts
-
-# 调试模式启动
-npm run start:debug
 ```
 
 ## 项目架构
 
-这是一个基于 **NestJS 11 + TypeORM + MySQL** 的 RBAC（基于角色的访问控制）管理员后台系统。
+基于 **NestJS 11 + TypeORM + MySQL** 的 RBAC 管理员后台系统。已实现完整的 JWT 认证、权限守卫和菜单树接口。
 
-### 模块结构
+### 模块与路由
 
 ```
 src/
-├── main.ts                        # 应用入口，监听端口（默认 3000）
-├── app.module.ts                  # 根模块，导入 ConfigModule、TypeOrmModule、业务模块
-├── app.service.ts                 # 根服务，返回 "Hello World!"
+├── main.ts                                  # 入口：ValidationPipe + ClassSerializerInterceptor 全局注册
+├── app.module.ts                            # 根模块，导入业务模块
+├── app.service.ts                           # GET / -> "Hello World!"
 ├── config/
-│   └── database.config.ts         # TypeORM 数据库配置工厂（读取 .env）
-└── modules/
-    ├── user/                      # 用户管理（路由前缀 /user）
-    │   ├── user.module.ts
-    │   ├── user.controller.ts     # CRUD: find, findOne, create, update, remove
-    │   ├── user.service.ts
-    │   ├── dto/
-    │   │   ├── create-user.dto.ts
-    │   │   └── update-user.dto.ts # PartialType(CreateUserDto)
-    │   └── entities/
-    │       └── user.entity.ts     # User 实体，多对多关联 Role
-    ├── role/                      # 角色管理（路由前缀 /role）
-    │   ├── role.module.ts
-    │   ├── role.controller.ts
-    │   ├── role.service.ts
-    │   ├── dto/                   # CreateRoleDto, UpdateRoleDto
-    │   └── entities/
-    │       └── role.entity.ts     # Role 实体，多对多关联 User 和 Permission
-    └── permission/                # 权限管理（路由前缀 /permission）
-        ├── permission.module.ts
-        ├── permission.controller.ts
-        ├── permission.service.ts
-        ├── dto/                   # CreatePermissionDto, UpdatePermissionDto
-        └── entities/
-            └── permission.entity.ts  # Permission 实体，支持 parentId 层级菜单树
+│   └── database.config.ts                   # TypeORM 配置工厂（开发环境 synchronize+logging 开启）
+├── common/
+│   ├── decorators/
+│   │   ├── current-user.decorator.ts        # @CurrentUser() 提取 req.user，支持取指定字段
+│   │   └── permission.decorator.ts          # @RequirePermissions('user:create') 声明所需权限码
+│   └── guards/
+│       ├── permission.guard.ts              # PermissionsGuard：匹配任意一个所需权限码即放行
+│       └── role.guard.ts                    # RoleGuard：检查 role.code === 'ROLE_SUPER_ADMIN'
+├── modules/
+│   ├── auth/                                # 路由前缀 /auth，无需守卫（login 用 LocalGuard）
+│   │   ├── auth.module.ts                   # 导入 PassportModule + JwtModule + UserModule
+│   │   ├── auth.controller.ts               # POST /login -> JWT | GET /menus -> 菜单树
+│   │   ├── auth.service.ts                  # validateUser + login（签发JWT）+ getMenus
+│   │   └── strategies/
+│   │       ├── local.strategy.ts            # passport-local，body 取 username 字段
+│   │       └── jwt.strategy.ts              # passport-jwt，Bearer header 提取；validate 中查出完整用户及权限码
+│   ├── user/                                # 路由前缀 /user，类级守卫：JwtAuth + PermissionsGuard
+│   │   ├── user.controller.ts               # POST create | GET list | POST update（改密码）| POST delete
+│   │   ├── user.service.ts                  # 真实实现：查重、级联加载角色、软删除、密码校验
+│   │   ├── dto/                             # CreateUserDto + UpdateUserDto（含 oldPassword/newPassword）
+│   │   └── entities/
+│   │       └── user.entity.ts               # 表 user，password_hash 用 @Exclude()
+│   ├── role/                                # 路由前缀 /role，无类级守卫
+│   │   ├── role.controller.ts               # POST create | GET list | GET :id | POST update | DELETE :id
+│   │   ├── role.service.ts                  # create/update/findOne 已实现; findAll/remove 仍为占位符
+│   │   ├── dto/                             # CreateRoleDto + UpdateRoleDto（permissionCodes 字符串数组）
+│   │   └── entities/
+│   │       └── role.entity.ts               # 表 role，多对多关联 permission（中间表 role_permission）
+│   └── permission/                          # 路由前缀 /permission，无类级守卫
+│       ├── permission.controller.ts         # POST create | GET list | GET :id | PATCH :id | DELETE :id
+│       ├── permission.service.ts            # getMenuByPermCodes（递归构建菜单树）已实现; 其余为占位符
+│       ├── dto/                             # CreatePermissionDto + UpdatePermissionDto
+│       └── entities/
+│           └── permission.entity.ts         # 表 permission，支持 parentId 层级
 ```
 
-### RBAC 实体关系
+### RBAC 模型
 
 ```
-User ──<many-to-many>── Role ──<many-to-many>── Permission
-  │                         │
-  └─ 中间表: user_role      └─ 中间表: role_permission
+User ──<many-to-one>── Role ──<many-to-many>── Permission
+                           │
+                           └─ 中间表: role_permission
 ```
 
-- **User**: bigint 主键，username（唯一），passwordHash（bcrypt），email，phone，status（1=正常，2=禁用）
-- **Role**: code（唯一，如 "admin"），name，status，isSystem，sortOrder
-- **Permission**: code（唯一，如 "user:create"），resource，action，type（1=菜单，2=按钮），支持 parentId 层级结构
+- **User**: int unsigned PK，username（唯一），passwordHash（bcrypt），email，phone，status（1=正常，2=禁用），role_id 外键。内置 `setPassword()` 和 `validatePassword()`（saltRounds=10）
+- **Role**: code（唯一，如"admin"），name，status，isSystem，roleLevel，sortOrder
+- **Permission**: code（唯一，如"user:create"），name，parentId（支持树形菜单），path（前端路由），icon，type（1=目录，2=菜单，3=API），sortOrder
 
-User 实体内置 `setPassword()` 和 `validatePassword()` 方法（bcrypt，saltRounds=10）。
+### 认证与授权流程
 
-### 当前状态与待办事项
-
-- ✅ 完整的数据表结构定义与实体关系
-- ✅ 基础 CRUD 路由（Controller + DTO 骨架）
-- ✅ 数据库连接配置（MySQL + TypeORM）
-- ✅ JWT/Passport/bcrypt 依赖已安装
-- ❌ **Service 层方法目前仅返回占位字符串**（如 `'This action adds a new user'`），未实现真实数据库操作
-- ❌ **认证模块缺失**：没有 `AuthModule`、JWT Strategy、登录端点、AuthGuard
-- ❌ **DTO 验证器装饰器未添加**：class-validator 装饰器尚未应用到 DTO 字段
-- ❌ **权限/角色守卫未实现**：没有 `RolesGuard`、`PermissionsGuard` 或自定义装饰器
-- ❌ 单元测试仅验证模块已定义，无业务逻辑测试
+1. `POST /auth/login` → `LocalStrategy.validate()` → `AuthService.validateUser()` 校验密码 → `AuthService.login()` 签发 JWT（payload: `{ userId, username }`）
+2. 后续请求携带 `Authorization: Bearer <token>` → `JwtStrategy.validate()` 中通过 userId 查出完整 User（含 `role.permissions`），将权限码数组挂到 `user.permissionCodes` 上
+3. 接口上的 `@RequirePermissions('user:create')` → `PermissionsGuard` 读取元数据，与 `user.permissionCodes` 用 `some()` 匹配（OR 逻辑），任一匹配即放行
+4. `GET /auth/menus` → `PermissionService.getMenuByPermCodes()` 根据用户权限码查询 type=1/2 的权限，`buildTree()` 递归构建嵌套树
 
 ### 编码约定
 
-- 每个模块独立目录，含 controller/service/dto/entities
-- Controller 路由方法顺序：find(Get) → findOne(Get/:id) → create(Post) → update(Patch/:id) → remove(Delete/:id)
+- Controller 方法顺序：find(Get) → findOne(Get/:id) → create(Post) → update(Patch/:id) → remove(Delete/:id)
 - DTO 命名：`Create*Dto`，`Update*Dto` 通过 `PartialType()` 继承
 - Controller 参数中 id 用 `+id` 转换为数字
+- 路由统一用 POST（除角色和权限模块外），而非 RESTful 语义动词
 - `.env` 存放数据库和 JWT 配置
 
-### 环境变量（.env）
+### 环境变量
 
 ```
 PORT=3000
@@ -127,3 +126,10 @@ JWT_SECRET / JWT_EXPIRES_IN=7d
 - 开发环境启用 `synchronize: true` 和 `logging: true`
 - 时区 `+08:00`（北京时间）
 - 自动扫描 `**/*.entity{.ts,.js}`
+
+### 待完善部分
+
+- `RoleService.findAll()` 和 `remove()`、`PermissionService` 大部分方法仍是占位符
+- Role 和 Permission 模块的 Controller 未加 AuthGuard/PermissionsGuard
+- 单元测试仅验证模块可编译，无业务逻辑测试
+- `.http` 文件中的 JWT token 是硬编码的示例值
