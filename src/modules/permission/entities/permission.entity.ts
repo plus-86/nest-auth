@@ -8,6 +8,12 @@ import {
   ManyToMany,
 } from 'typeorm';
 
+export enum PermissionType {
+  Directory = 1, // 目录
+  Menu = 2,      // 菜单
+  Api = 3,       // 接口
+}
+
 /**
  * 权限实体类
  * 对应数据库中的 permission 表
@@ -43,10 +49,10 @@ export class Permission {
 
   @Column({
     type: 'tinyint',
-    default: 3,
+    default: PermissionType.Api,
     comment: '类型：1-目录，2-菜单，3-接口',
   })
-  type: number;
+  type: PermissionType;
 
   @Column({ name: 'sort_order', type: 'int', default: 0, comment: '排序' })
   sortOrder: number;

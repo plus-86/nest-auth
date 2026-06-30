@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
 import { PermissionService } from '../permission/permission.service';
+import { PermissionType } from '../permission/entities/permission.entity';
 
 @Injectable()
 export class AuthService {
@@ -36,7 +37,9 @@ export class AuthService {
   async getMenuTreeByUserId(userId: number) {
     const user = await this.userService.findByIdWithPermissions(userId)
 
-    const menuPerms = user.role.permissions.filter(p => [1,2].includes(p.type))
+    const menuPerms = user.role.permissions.filter(p =>
+      [PermissionType.Directory, PermissionType.Menu].includes(p.type),
+    )
 
     return this.permissionService.buildTree(menuPerms);
   }
