@@ -10,19 +10,7 @@ export class PermissionService {
   constructor(
     @InjectRepository(Permission) private permRepo: Repository<Permission>,
   ) {}
-  async getMenuByPermCodes(permissionCodes: string[]) {
-    const perm = await this.permRepo.find({
-      where: {
-        type: In([1, 2]),
-        code: In(permissionCodes),
-      },
-      order: { sortOrder: 'ASC' },
-    });
-
-    return this.buildTree(perm);
-  }
-
-  private buildTree(list: Permission[], parentId = 0): any[] {
+  buildTree(list: Permission[], parentId = 0): any[] {
     return list
       .filter((item) => item.parentId === parentId)
       .map((item) => {

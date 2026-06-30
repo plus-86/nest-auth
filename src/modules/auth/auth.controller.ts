@@ -22,7 +22,7 @@ export class AuthController {
 
   @Get('menus')
   @UseGuards(AuthGuard('jwt'))
-  async getMenus(@CurrentUser() user) {
-    return this.authService.getMenus(user.permissionCodes);
+  async getMenuTreeByUserId(@CurrentUser('id') userId: number) {
+    return this.authService.getMenuTreeByUserId(userId);
   }
 }

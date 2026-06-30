@@ -5,11 +5,15 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { UserService } from 'src/modules/user/user.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
-  canActivate(context: ExecutionContext): boolean {
+  constructor(
+    private reflector: Reflector,
+    private userService: UserService,
+  ) {}
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     // 1. 从接口上的装饰器取到需要的权限码
     const requiredCodes = this.reflector.get<string[]>(
       'permissions', // 找 key 为 'permissions' 的元数据
@@ -17,17 +21,20 @@ export class PermissionsGuard implements CanActivate {
     );
     if (!requiredCodes) return true; // 没加装饰器则直接放行
 
-    // 2. 从请求里拿到当前登录用户（假设前面有 JWT 守卫已经挂载了 user）
+    // 2. 从请求里拿到当前登录用户
     const { user } = context.switchToHttp().getRequest();
-    // 3. 取用户的所有权限码（需要在JWT策略里提前查好放到 user.xx 里）
-    const userPermissions = user.permissionCodes ?? [];
+
+    const fullUser = await this.userService.findByIdWithPermissions(user.id);
+
+    // 3. 将返回的permission codes处理成数组
+    const userPermissions = fullUser.role.permissions.map((p) => p.code) ?? [];
 
     // 4. 检查用户是否拥有任意一个所需权限
     const hasPermission = requiredCodes.some((code) =>
       userPermissions.includes(code),
     );
 
-    if (!hasPermission) throw new ForbiddenException('权限不足perm');
+    if (!hasPermission) throw new ForbiddenException('权限不足');
     return true;
   }
 }

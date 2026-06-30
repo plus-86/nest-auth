@@ -33,7 +33,11 @@ export class AuthService {
     };
   }
 
-  async getMenus(permissionCodes) {
-    return this.permissionService.getMenuByPermCodes(permissionCodes);
+  async getMenuTreeByUserId(userId: number) {
+    const user = await this.userService.findByIdWithPermissions(userId)
+
+    const menuPerms = user.role.permissions.filter(p => [1,2].includes(p.type))
+
+    return this.permissionService.buildTree(menuPerms);
   }
 }

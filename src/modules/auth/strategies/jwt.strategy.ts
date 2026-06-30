@@ -29,9 +29,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     );
 
     // 返回的用户信息会挂到 req.user 上
-    return {
-      ...user,
-      permissionCodes: user.role?.permissions?.map((p) => p.code) ?? [],
-    };
+    return user
   }
 }

@@ -32,11 +32,21 @@ export class UserService {
   async findById(id: number) {
     const user = await this.userRepository.findOne({
       where: { id },
+    });
+
+    if (!user) throw new UnauthorizedException('用户不存在');
+
+    return user;
+  }
+
+  async findByIdWithPermissions(id: number) {
+    const user = await this.userRepository.findOne({
+      where: { id },
       relations: {
         role: {
-          permissions: true
-        }
-      }
+          permissions: true,
+        },
+      },
     });
 
     if (!user) throw new UnauthorizedException('用户不存在');
@@ -88,7 +98,9 @@ export class UserService {
   // }
 
   async findAll() {
-    return await this.userRepository.find({ relations: { role: { permissions: true } } });
+    return await this.userRepository.find({
+      relations: { role: { permissions: true } },
+    });
   }
 
   findOne(id: number) {
